@@ -1,0 +1,63 @@
+- name: Check AWS installation
+  shell: aws --version
+  register: aws_exists
+  ignore_errors: yes
+
+- name: Install python if needed
+  apt:
+    name: python
+    state: present
+    update_cache: true
+
+- name: Install unzip if needed
+  apt:
+    name: unzip
+    state: present
+    update_cache: true
+
+- name: Download aws client
+  get_url:
+    url: https://s3.amazonaws.com/aws-cli/awscli-bundle.zip
+    dest: "./awscli-bundle.zip"
+  when: "aws_exists.rc != 0"
+
+- name: Remove awscli-bundle in case there
+  file:
+    path: ./awscli-bundle
+    state: absent
+  when: "aws_exists.rc != 0"
+
+- name: Unarchive awscli-bundle
+  unarchive:
+    src: ./awscli-bundle.zip
+    dest: .
+    remote_src: yes
+  when: "aws_exists.rc != 0"
+
+- name: Install aws client
+  shell: ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+  when: "aws_exists.rc != 0"
+
+- name: Configure aws client
+  shell: "{{ item }}"
+  with_items:
+    - aws configure set region {{ backup_region }}
+    - aws configure set output json
+    - aws configure set aws_secret_access_key {{ backup_secret }}
+    - aws configure set aws_access_key_id {{ backup_public }}
+
+- name: Add cron job file
+  template:
+    src: cron-backup.sh.j2
+    dest: /etc/cron/cron-backup.sh
+    owner: root
+    mode: '0700'
+
+- name: Create backup cronjob
+  cron:
+    name: "Renew letsencrypt cron"
+    minute: "{{ backup_minute }}"
+    hour: "{{ backup_hour }}"
+    cron_file: "/etc/crontab"
+    user: "root"
+    job: "sh /etc/cron/cron-backup.sh"

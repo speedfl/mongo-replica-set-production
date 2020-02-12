@@ -1,0 +1,7 @@
+{% for secondary in groups['secondaries'] %}
+rs.add({ host: "{{ secondary }}:27017", priority: {{ hostvars[secondary]['priority'] }} })
+{% endfor %}
+{% for arbiter in groups['arbiter'] %}
+rs.addArb("{{ arbiter }}:27017")
+{% endfor %}
+printjson(rs.status())

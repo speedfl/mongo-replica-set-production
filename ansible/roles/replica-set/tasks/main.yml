@@ -1,0 +1,78 @@
+- name: Add necessary files
+  template: 
+    src: "{{item}}.js.j2"
+    dest: "./{{item}}.js"
+  loop:
+    - initReplicaset
+    - createUserAdmin
+    - createRootUser
+    - createUser
+    - addMembers
+
+#   Init replicaset. First try authenticated (if not use auth)
+- name: Init replicaset on primary {{ inventory_hostname }} (not authenticated)
+  shell:  mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_root_name }} --password {{ mongodb_user_root_password }} ./initReplicaset.js
+  register: replicaset_status
+  ignore_errors: yes
+  failed_when:
+    - replicaset_status.rc != 0
+    - '"Authentication failed" not in replicaset_status.stdout'
+
+- name: Init replicaset on primary {{ inventory_hostname }} (authenticated)
+  shell:  mongo --tls {{ inventory_hostname }} ./initReplicaset.js
+  when: 
+    - '"PRIMARY" not in replicaset_status.stdout'
+
+#   User management
+- name: Verify user Admin already exists (Authentication is required)
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_user_admin_any_database_name }} --password {{ mongodb_user_user_admin_any_database_password }} admin --eval "printjson(db.getUsers())"
+  register: user_admin_exists
+  ignore_errors: yes
+
+- name: Create user Admin on primary {{ inventory_hostname }}
+  shell: mongo --tls --host {{ inventory_hostname }} admin ./createUserAdmin.js
+  when: 'mongodb_user_user_admin_any_database_name not in user_admin_exists.stdout'
+
+- name: Verify Root user already exists
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_user_admin_any_database_name }} --password {{ mongodb_user_user_admin_any_database_password }} admin --eval "printjson(db.getUsers())"
+  register: root_user_exists
+  ignore_errors: yes
+
+- name: Create Root user on primary {{ inventory_hostname }}
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_user_admin_any_database_name }} --password {{ mongodb_user_user_admin_any_database_password }} admin ./createRootUser.js
+  when: 'mongodb_user_root_name not in root_user_exists.stdout'
+
+- name: Verify DB user already exists
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_root_name }} --password {{ mongodb_user_root_password }} {{ mongodb_main_database }} --eval "printjson(db.getUsers())"
+  register: db_user_exists
+  ignore_errors: yes
+
+- name: Create database user on primary {{ inventory_hostname }}
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_user_admin_any_database_name }} --password {{ mongodb_user_user_admin_any_database_password }} {{ mongodb_main_database }} ./createUser.js
+  when: 'mongodb_user_readwrite_main_database_name not in db_user_exists.stdout'
+
+#   End User management
+
+#   Add other members. If 'SECONDARY' has been found it is already initialized
+
+- name: Check replicaset status
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_root_name }} --password {{ mongodb_user_root_password }} admin --eval "printjson(rs.status())"
+  register: secondary_status
+  ignore_errors: yes
+
+- name: Add replicaset members on primary {{ inventory_hostname }}
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_root_name }} --password {{ mongodb_user_root_password }} admin ./addMembers.js
+  when: '"SECONDARY" not in secondary_status'
+
+#   End Add other members
+
+- name: Remove files
+  file:
+    path: "./{{item}}.js"
+    state: absent
+  loop:
+    - initReplicaset
+    - createUserAdmin
+    - createRootUser
+    - createUser
+    - addMembers

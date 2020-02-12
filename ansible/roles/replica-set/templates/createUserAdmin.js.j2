@@ -1,0 +1,1 @@
+db.createUser({ user: "{{ mongodb_user_user_admin_any_database_name }}", pwd: "{{ mongodb_user_user_admin_any_database_password }}", roles: [{ role: "userAdminAnyDatabase", db: "admin" }]});

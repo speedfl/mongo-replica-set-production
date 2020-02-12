@@ -1,0 +1,1 @@
+db.createUser({ user: "{{ backup_db_user_name }}", pwd: "{{ backup_db_user_password }}", roles: [{ role: "backup", db: "admin" }]})

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DATE=$(date '+%Y-%m-%d')
+mongodump --host {{groups['primary']}}:27017,{{ groups['secondaries'] | map("regex_replace", "(.*)", "\\1:27017") | join(",") }} --db {{ mongodb_main_database }} --authenticationDatabase admin --ssl --username {{ backup_db_user_name }} --password {{ backup_db_user_password }} --out ~/backup/dump
+tar -czvf $DATE.tar.gz -C ~/backup/dump
+aws s3 cp 2020-02-11.tar.gz s3://my-project-mongodb-backup/$DATE.tar.gz
+rm -rf ~/backup

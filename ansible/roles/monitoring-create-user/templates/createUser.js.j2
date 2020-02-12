@@ -1,0 +1,1 @@
+db.createUser({ user: "{{ monitoring_db_user_name }}", pwd: "{{ monitoring_db_user_password }}", roles: [{ role: "clusterMonitor", db: "admin" }, { role: "read", db: "local" }]})

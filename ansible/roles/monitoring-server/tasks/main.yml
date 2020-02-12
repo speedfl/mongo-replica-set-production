@@ -1,0 +1,32 @@
+# https://askubuntu.com/questions/842592/apt-get-fails-on-16-04-or-18-04-installing-mongodb
+- name: Install docker
+  apt:
+    name: docker.io
+    state: present
+    update_cache: true
+
+- name: Check docker installation_status
+  shell: docker ps
+  register: process_exists
+  ignore_errors: yes
+
+- name: Create data container
+  shell: docker create -v /srv --name pmm-data  percona/pmm-server:2 /bin/true
+  when: "'pmm-server' not in process_exists.stdout"
+
+- name: Run server
+  shell: docker run -d -p 8080:80 -p 8443:443 --volumes-from pmm-data --name pmm-server --restart always percona/pmm-server:2
+  when: "'pmm-server' not in process_exists.stdout"
+
+- name: Verify installation
+  uri:
+    url: "https://{{ inventory_hostname  }}:8443"
+    validate_certs: no
+    return_content: yes
+  register: installation_status
+  failed_when: "'grafana-app' not in installation_status.content"
+  retries: 3
+  delay: 3
+
+- name: Change password
+  shell: docker exec -t pmm-server bash -c  'ln -s /srv/grafana /usr/share/grafana/data; grafana-cli --homepath /usr/share/grafana admin reset-admin-password {{ monitoring_password }}'

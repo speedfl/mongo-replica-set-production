@@ -1,0 +1,2 @@
+rs.initiate({ _id : "{{ mongodb_replicaset_name }}", members: [{ _id : 0, host : "{{ inventory_hostname }}:27017" }]})
+printjson(rs.status())

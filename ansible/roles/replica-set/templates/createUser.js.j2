@@ -1,0 +1,1 @@
+db.createUser({ user: "{{ mongodb_user_readwrite_main_database_name }}", pwd: "{{ mongodb_user_readwrite_main_database_password }}", roles: [{role: "readWrite", db: "{{ mongodb_main_database }}"}]})

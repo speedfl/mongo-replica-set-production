@@ -1,0 +1,5 @@
+- hosts: mongodb
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - encrypt-rest

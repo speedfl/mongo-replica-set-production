@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# shutdown mongodDB
+mongod --config /etc/mongod.conf --shutdown
+
+# open 80 and 443 for ssl renew
+firewall-cmd --zone=public --add-port=80/tcp --permanent
+firewall-cmd --zone=public --add-port=443/tcp --permanent
+firewall-cmd --reload
+
+# launch renewal of certificate
+certbot renew
+
+rm /etc/ssl/mongodb.pem
+rm /etc/ssl/ca.pem
+
+cat /etc/letsencrypt/live/{{ inventory_hostname }}/privkey.pem /etc/letsencrypt/live/{{ inventory_hostname }}/cert.pem > /etc/ssl/mongodb.pem
+openssl pkcs7 -in /etc/ssl/ca.p7b -inform DER -print_certs -out /etc/ssl/ca.pem
+cat /etc/letsencrypt/live/{{ inventory_hostname }}/chain.pem >> /etc/ssl/ca.pem
+
+chown mongodb /etc/ssl/mongodb.pem
+chown mongodb /etc/ssl/ca.pem
+chmod 600 /etc/ssl/mongodb.pem
+chmod 600 /etc/ssl/ca.pem
+
+# reclose 80 and 443
+firewall-cmd --zone=public --remove-port=80/tcp --permanent
+firewall-cmd --zone=public --remove-port=443/tcp --permanent
+firewall-cmd --reload
+
+# reconnect as mongodb
+sudo -u mongodb mongod -v --config /etc/mongod.conf --fork

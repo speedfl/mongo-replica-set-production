@@ -1,0 +1,39 @@
+- hosts: mongodb
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - prepare-host
+    - encrypt-rest
+    - security
+    - mongodb
+
+- hosts: primary
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - replica-set
+    - monitoring-create-user
+ 
+- hosts: monitoring_server
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - monitoring-server
+  
+- hosts: monitoring_clients
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - monitoring-clients
+  
+- hosts: primary
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - backup-create-user
+
+- hosts: backup_server
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - backup

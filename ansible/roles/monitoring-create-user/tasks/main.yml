@@ -1,0 +1,21 @@
+- name: Verify DB user already exists
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_root_name }} --password {{ mongodb_user_root_password }} admin --eval "printjson(db.getUsers())"
+  register: db_user_exists
+  ignore_errors: yes
+
+- name: Add necessary file
+  template: 
+    src: "createUser.js.j2"
+    dest: "./createUser.js"
+  when: "monitoring_db_user_name not in db_user_exists.stdout"
+
+- name: Create database user on primary {{ inventory_hostname }}
+  shell: mongo --tls --host {{ inventory_hostname }} --authenticationDatabase admin --username {{ mongodb_user_user_admin_any_database_name }} --password {{ mongodb_user_user_admin_any_database_password }} admin ./createUser.js
+  when: "monitoring_db_user_name not in db_user_exists.stdout"
+
+- name: Remove file
+  file:
+    path: "createUser.js"
+    state: absent
+  when: "monitoring_db_user_name not in db_user_exists.stdout"
+  

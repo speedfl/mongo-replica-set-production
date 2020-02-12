@@ -1,0 +1,35 @@
+- name: Install gnupg2 if needed
+  apt:
+    name: gnupg2
+    state: present
+    update_cache: true
+
+- name: Retrieving percona latest repository
+  get_url:
+    url: https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+    dest: "./percona-release_latest.generic_all.deb"
+
+- name: Configure percona repository
+  shell: dpkg -i percona-release_latest.generic_all.deb
+
+- name: Install percona client
+  apt:
+    name: pmm2-client
+    state: present
+    update_cache: true
+
+- name: Connect client
+  shell: "pmm-admin config --server-insecure-tls --server-url=https://admin:{{ monitoring_password }}@{{ item }}:8443"
+  loop: "{{ groups['monitoring_server'] }}"
+  register: command_result
+  failed_when:
+    - command_result.rc != 0
+    - '"already" not in command_result.stdout'
+
+
+- name: Add mongodb metric
+  shell: pmm-admin add mongodb --host {{ inventory_hostname }} --port 27017 --username={{ monitoring_db_user_name }} --password={{ monitoring_db_user_password }} --tls
+  register: command_result
+  failed_when:
+    - command_result.rc != 0
+    - '"already" not in command_result.stdout'

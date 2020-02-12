@@ -1,0 +1,17 @@
+- hosts: primary
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - monitoring-create-user
+
+- hosts: monitoring_server
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - monitoring-server
+
+- hosts: monitoring_clients
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - monitoring-clients

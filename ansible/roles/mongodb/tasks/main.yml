@@ -1,0 +1,26 @@
+- name: Copy mongod.conf file
+  template:
+    src: mongod.conf.j2
+    force: yes
+    dest: /etc/mongod.conf
+    owner: mongodb
+
+- name: Change DB path ownership and permissions to 700
+  file:
+    path: "{{ mongodb_db_path }}"
+    owner: mongodb
+    mode: '700'
+
+- name: Check if MongoDB already started
+  command: mongo --tls {{ inventory_hostname }} --eval "printjson(db.runCommand('ping'))"
+  register: mongo_startup_result
+  ignore_errors: yes
+  
+- name: Start MongoDB with mongodb user
+  shell: mongod -v --config /etc/mongod.conf --fork
+  become: yes
+  become_user: mongodb
+  when: mongo_startup_result.rc != 0
+
+- name: Check MongoDB started successfully on {{ inventory_hostname }}
+  shell: mongo --tls {{ inventory_hostname }} --eval "printjson(db.runCommand('ping'))"

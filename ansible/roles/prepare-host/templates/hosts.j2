@@ -1,0 +1,7 @@
+127.0.0.1 localhost
+127.0.0.1 {{ inventory_hostname }}
+127.0.0.1 {{ hostvars[inventory_hostname]['host_name'] }}
+{% for host in groups['mongodb'] %}
+{{ hostvars[host]['host_ip'] }} {{ host }}
+{{ hostvars[host]['host_ip'] }} {{ hostvars[host]['host_name'] }}
+{% endfor %}

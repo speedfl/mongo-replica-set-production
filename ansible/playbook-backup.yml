@@ -1,0 +1,11 @@
+- hosts: primary
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - backup-create-user
+
+- hosts: backup_server
+  remote_user: ubuntu
+  become: yes
+  roles:
+    - backup

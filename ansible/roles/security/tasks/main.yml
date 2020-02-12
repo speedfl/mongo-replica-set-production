@@ -1,0 +1,114 @@
+- name: Create /etc/mongodb directory if it does not exist
+  file:
+    path: /etc/mongodb
+    state: directory
+    owner: mongodb
+    mode: '0700'
+
+- name: Copy mongodb keyfile
+  copy:
+    src: mongo-keyfile
+    dest: /etc/mongodb/mongo-keyfile
+    owner: mongodb
+    mode: '0600'
+
+- name: Stop service apache2 (can be httpd for older releases) (conflict with letsencrypt).
+  shell: systemctl stop apache2
+  register: command_result
+  ignore_errors: yes
+  failed_when:
+    - command_result.rc != 0
+    - '"does not exist" not in command_result.stdout'
+
+- name: Disable service apache2 (can be httpd for older releases) (conflict with letsencrypt).
+  shell: systemctl disable apache2
+  register: command_result
+  ignore_errors: yes
+  failed_when:
+    - command_result.rc != 0
+    - '"does not exist" not in command_result.stdout'
+
+- name: Add repository for certbot for letsencrypt
+  apt_repository:
+    repo: ppa:certbot/certbot
+    state: present
+
+- name: Install certbot for letsencrypt
+  apt:
+    name: python-certbot-apache
+    update_cache: yes
+
+- name: Check if certificate already exists.
+  stat:
+    path: /etc/letsencrypt/live/{{ inventory_hostname }}/cert.pem
+  register: letsencrypt_cert
+
+- name: Generate new certificate if one doesn't exist.
+  shell: "certbot certonly --standalone --noninteractive --agree-tos --email {{ certbot_admin_email }} -d {{ inventory_hostname }}"
+  when: letsencrypt_cert.stat.exists == False
+
+- name: Create /etc/ssl directory if it does not exist
+  file:
+    path: /etc/ssl
+    state: directory
+    owner: mongodb
+    group: mongodb
+    mode: '0700'
+
+- name: Create /etc/ssl/mongodb.pem
+  shell: "cat /etc/letsencrypt/live/{{ inventory_hostname }}/privkey.pem /etc/letsencrypt/live/{{ inventory_hostname }}/cert.pem > /etc/ssl/mongodb.pem"
+
+- name: Change /etc/ssl/mongodb.pem ownership and permissions to 600
+  file:
+    path: /etc/ssl/mongodb.pem
+    owner: mongodb
+    group: mongodb
+    mode: '0600'
+
+- name: Retrieving p7b identrust certificate authority
+  get_url:
+    url: https://www.identrust.com/node/935
+    dest: /etc/ssl/ca.p7b
+    owner: mongodb
+    group: mongodb
+    mode: '0700'
+
+- name: Generate /etc/ssl/ca.pem from p7b
+  shell: openssl pkcs7 -in /etc/ssl/ca.p7b -inform DER -print_certs -out /etc/ssl/ca.pem
+
+- name: Adding chain.pem to /etc/ssl/ca.pem
+  shell: cat /etc/letsencrypt/live/{{ inventory_hostname }}/chain.pem >> /etc/ssl/ca.pem
+
+- name: Verifying the /etc/ssl/mongodb.pem
+  shell: openssl verify -CAfile /etc/ssl/ca.pem /etc/ssl/mongodb.pem
+
+- name: Change /etc/ssl/ca.pem ownership and permissions to 600
+  file:
+    path: /etc/ssl/ca.pem
+    owner: mongodb
+    group: mongodb
+    mode: '0600'
+
+- name: Create /etc/cron directory if it does not exist
+  file:
+    path: /etc/cron
+    state: directory
+    owner: root
+    mode: "0700"
+
+- name: Create shell file for ssl renew cron job from template
+  template:
+    src: cron-renew-cert.sh.j2
+    dest: /etc/cron/cron-renew-cert.sh
+    owner: root
+    mode: "0700"
+
+- name: Create ssl renew cronjob
+  cron:
+    name: "Renew letsencrypt cron"
+    minute: "30"
+    hour: "03"
+    cron_file: "/etc/crontab"
+    user: "root"
+    day: "{{ hostvars[inventory_hostname]['cron_renew_day'] }}"
+    job: "sh /etc/cron/cron-renew-cert.sh"
