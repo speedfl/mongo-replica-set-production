@@ -85,11 +85,13 @@ Thinks about modifying the `./ansible/hosts.yaml` file. Here is the significatio
 #### mongodb
 Here we will put all our host. You can notice variables such as:
 
-`host_name`: The name of the host.
-`host_ip`: The public IP of your host
-`host_private_ip`: Some cloud provider provide public IP as elastic (the private ip must be added for mongodb binding)
-`cron_renew_day`: this is the renewal day of week in cron language (0 for Sunday to 1 for Saturday). We will launch the job every week on this specific day at 03:30AM. You can notice that we don't set the same so in case of any issue you have 24 hours to fix it.
-primary/secondaries/arbiter
+- `host_name`: The name of the host.
+- `host_ip`: The public IP of your host
+- `host_private_ip`: Some cloud provider provide public IP as elastic (the private ip must be added for mongodb binding)
+- `cron_renew_day`: this is the renewal day of week in cron language (0 for Sunday to 1 for Saturday). We will launch the job every week on this specific day at 03:30AM. You can notice that we don't set the same so in case of any issue you have 24 hours to fix it.
+
+
+#### primary/secondaries/arbiter
 We could do this by using variable but I prefer in term of visibility to use dedicated children node even if I copy the host from mongodb hosts. This gives as well the possibility to add new variable such as the priority for secondaries.
 
 #### monitoring_server
