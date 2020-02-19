@@ -21,7 +21,7 @@ systemLog:
 # network interfaces
 net:
   port: 27017
-  bindIp: {{ hostvars[inventory_hostname]['host_ip'] }},127.0.0.1
+  bindIp: {% if hostvars[inventory_hostname]['host_private_ip'] is defined %}{{ hostvars[inventory_hostname]['host_private_ip'] }}{% else %}{{ hostvars[inventory_hostname]['host_ip'] }}{% endif %},127.0.0.1
   tls:
     mode: requireTLS
     certificateKeyFile: /etc/ssl/mongodb.pem

@@ -1,5 +1,5 @@
 - hosts: mongodb
-  remote_user: ubuntu
+  remote_user: "{{ remote_user }}"
   become: yes
   roles:
     - prepare-host
@@ -7,7 +7,7 @@
     - mongodb
 
 - hosts: primary
-  remote_user: ubuntu
+  remote_user: "{{ remote_user }}"
   become: yes
   roles:
     - replica-set

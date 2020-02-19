@@ -43,6 +43,8 @@ A DNS configuration may be needed.
 
 You will need to have ssh access to use ansible.
 
+Ensure that sudo is installed on all host and that user is in sudoer list (in `/etc/sudoers`)
+
 ### Access key
 
 To not reuse the default mongodb keyfile you can run:
@@ -83,9 +85,10 @@ Thinks about modifying the `./ansible/hosts.yaml` file. Here is the significatio
 #### mongodb
 Here we will put all our host. You can notice variables such as:
 
-host_name: The name of the host.
-host_ip: The public IP of your host
-cron_renew_day: this is the renewal day of week in cron language (0 for Sunday to 1 for Saturday). We will launch the job every week on this specific day at 03:30AM. You can notice that we don't set the same so in case of any issue you have 24 hours to fix it.
+`host_name`: The name of the host.
+`host_ip`: The public IP of your host
+`host_private_ip`: Some cloud provider provide public IP as elastic (the private ip must be added for mongodb binding)
+`cron_renew_day`: this is the renewal day of week in cron language (0 for Sunday to 1 for Saturday). We will launch the job every week on this specific day at 03:30AM. You can notice that we don't set the same so in case of any issue you have 24 hours to fix it.
 primary/secondaries/arbiter
 We could do this by using variable but I prefer in term of visibility to use dedicated children node even if I copy the host from mongodb hosts. This gives as well the possibility to add new variable such as the priority for secondaries.
 
@@ -100,6 +103,7 @@ The server on which the backup will be performed. Can be your arbiter
 
 ### Variables
 
+- `remote_user`: the remote user which will be use to connect to vms
 - `mongodb_replicaset_name`: the name you want to give to your replicaset
 - `mongodb_db_path`: the path on which you want to store your data. Will be mounted on the encrypted partition
 - `mongodb_user_user_admin_any_database_name`: the first user which will be created with rights userAdminAnyDatabase

@@ -1,4 +1,4 @@
-# https://askubuntu.com/questions/842592/apt-get-fails-on-16-04-or-18-04-installing-mongodb
+# https://ask.ubuntu.com/questions/842592/apt-get-fails-on-16-04-or-18-04-installing-mongodb
 - name: Install docker
   apt:
     name: docker.io
@@ -22,7 +22,8 @@
   uri:
     url: "https://{{ inventory_hostname  }}:8443"
     validate_certs: no
-    return_content: yes
+    return_content: yes  
+  ignore_errors: yes
   register: installation_status
   failed_when: "'grafana-app' not in installation_status.content"
   retries: 3
