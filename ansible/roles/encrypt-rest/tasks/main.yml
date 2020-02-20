@@ -34,7 +34,7 @@
   
 - name: create LUKS container (remains unchanged if it already exists)
   luks_device:
-    device: "{{ partitioning_device_name }}1"
+    device: "{{ partitioning_partition_name }}"
     state: "opened"
     keyfile: "/etc/luks/keyfile"
     name: "{{ partitioning_luks_name }}"

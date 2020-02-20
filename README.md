@@ -87,7 +87,7 @@ Here we will put all our host. You can notice variables such as:
 
 - `host_name`: The name of the host.
 - `host_ip`: The public IP of your host
-- `host_private_ip`: Not mandatory. Some cloud providers (such as scaleway) provide public IP as elastic (the private ip must be added for mongodb binding)
+- `host_private_ip`: Not mandatory. When using public IPs such as elastic ips in AWS, or flexible ips for scaleway (the private ip must be added for mongodb binding). The private ip can be found by launching command `ifconfig`
 - `cron_renew_day`: this is the renewal day of week in cron language (0 for Sunday to 1 for Saturday). We will launch the job every week on this specific day at 03:30AM. You can notice that we don't set the same so in case of any issue you have 24 hours to fix it.
 
 
@@ -115,7 +115,8 @@ The server on which the backup will be performed. Can be your arbiter
 - `mongodb_main_database`: The main database for your application
 - `mongodb_user_readwrite_main_database_name`: A user with readWrite access on the main database
 - `mongodb_user_readwrite_main_database_password`: The password of the readWrite user
-- `partitioning_device_name`: The name of the partition you will use for encryption
+- `partitioning_device_name`: The name of the device for partition used for encryption (ie: `/dev/sdb` for scaleway `/dev/nvme0n1` for ebs on aws)
+- `partitioning_partition_name`: The name of the partition used for encryption (ie: `/dev/sdb1` for scaleway `/dev/nvme0n1p1` for ebs on aws)
 - `partitioning_luks_passphrase`: The passphrase for your encryption. Keep this passphrase safe and don't loose it
 - `partitioning_luks_name`: the name of the encrypted partition
 - `partitioning_vg_name`: The LVM volume group name
