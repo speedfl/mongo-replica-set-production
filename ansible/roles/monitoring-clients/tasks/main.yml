@@ -18,14 +18,23 @@
     state: present
     update_cache: true
 
-- name: Connect client
+- name: Connect client (with private IP)
   shell: "pmm-admin config --server-insecure-tls --server-url=https://admin:{{ monitoring_password }}@{{ item }}:8443"
   loop: "{{ groups['monitoring_server'] }}"
   register: command_result
+  when: hostvars[inventory_hostname]['host_private_ip'] is undefined
   failed_when:
     - command_result.rc != 0
     - '"already" not in command_result.stdout'
 
+- name: Connect client (with public IP as PMM is taking ip from ifconfig )
+  shell: "pmm-admin config --server-insecure-tls --server-url=https://admin:{{ monitoring_password }}@{{ item }}:8443 hostvars[inventory_hostname]['host_ip']"
+  loop: "{{ groups['monitoring_server'] }}"
+  register: command_result
+  when: hostvars[inventory_hostname]['host_private_ip'] is defined
+  failed_when:
+    - command_result.rc != 0
+    - '"already" not in command_result.stdout'
 
 - name: Add mongodb metric
   shell: pmm-admin add mongodb --host {{ inventory_hostname }} --port 27017 --username={{ monitoring_db_user_name }} --password={{ monitoring_db_user_password }} --tls
