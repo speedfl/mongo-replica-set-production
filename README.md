@@ -226,3 +226,29 @@ If you just want to run some part you have some predefined playbooks.
 ### Replay
 
 If you get an error most of the steps have checks so you can simply rerun the playbook after providing your fix.
+
+### Connect to your DB
+
+You can now connect to your DB from your `home_ip` with:
+
+```
+$ mongo "mongodb://mongo-1.my-domain.fr:27017,mongo-2.my-domain.fr:27017,mongo-3.my-domain.fr:27017/main?replicaSet=rs0" --ssl --username main-user --password "strong-password-3"
+```
+
+### Monitoring
+
+As explained above monitoring is done with the really complete and powerfool opensource tool [percona pmm](https://www.percona.com/software/database-tools/percona-monitoring-and-management) (based on prometheus and grafana).
+You will have access to plenty of data like:
+
+- Node CPU, Memory, Network and disk usage
+- MongoDB cluster summary, inMemoryDetails, Replicaset information and WiredTiger.
+- Query analytic (to see query efficiency)
+
+Here are some graphs:
+
+![Replicaset](./images/replicaset.png)
+
+![Replicaset](./images/node.png)
+
+
+Here is the official percona [grafana](https://pmmdemo.percona.com/graph/d/pmm-home/home-dashboard?orgId=1&refresh=1m)
