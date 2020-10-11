@@ -23,6 +23,20 @@ I invite you to have an fresh/clean environment (4 nodes newly created).
 
 This is under MIT liscence so you can use it and modify it as you want.
 
+## Note on the network security
+
+In this repository I am trying to make something generic whatever the underlying stack. If you want to use it on specific cloud vendor you can follow their directives to perfectly secure your infrastructure.
+
+### AWS
+
+If the consumer of your database is in an AWS stack it is recommanded to run your DB on multiple AZ, on private subnets in a VPC with a NAT Gateway so that the DB has no access to internet except through the NAT Gateway. You can then use a route 53 private zone and use your own certificates (official certificates).
+
+Reference:
+
+- https://docs.aws.amazon.com/fr_fr/Route53/latest/DeveloperGuide/hosted-zones-private.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
+
 ## Security: What is covered ?
 
 According to the [security checklist](https://docs.mongodb.com/v3.2/administration/security-checklist/):
